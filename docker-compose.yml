@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+    discordbot-simplon:
+        build: .
+        container_name: discordbot-simplon
+        volumes:
+            - ./:/usr/src/bot/
+            - /usr/src/bot/node_modules
+        command: npx nodemon /usr/src/bot/bot.js
