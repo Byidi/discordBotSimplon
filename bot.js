@@ -5,14 +5,20 @@ const auth = require('./auth.json');
 const SQLite = require("better-sqlite3");
 const sql = new SQLite('./sql/bookmark.sqlite');
 
+function isDMChannel(msg){
+	if(msg.channel.type != 'dm'){
+		return true;
+	}else{
+		return false;
+	}
+}
+
 function isURL(s) {
-	 var regexp = /^(https?|ftp):\/\/[\w.-]+(?:\.[\w\.-]+)[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/
+	 var regexp = /^(https?|ftp):\/\/[\w.-]+(?:\.[\w\.-]+)[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/;
      return regexp.test(s);
 }
 
 function shortenTitle(title){
-	console.log('title : '+title);
-	console.log('title : '+JSON.stringify(title));
 	return (title.length > 50)?title.substring(0, 50)+'...':title;
 }
 
@@ -21,7 +27,7 @@ function getUnique(arr, comp) {
 	return unique;
 }
 
-function help(func, msg){
+function bookmakrHelp(func, msg){
 	const reply = new Discord.RichEmbed();
 	switch(func){
 		case 'bm':
@@ -61,33 +67,35 @@ function saveBookmark(bm){
     return true;
 }
 
-function bookmarkAdd(args, msg){
-	if(args.length != 3){
-		msg.author.send("Commande incorrecte.\nTape '!bm help' pour plus d'information");
+function bookmarkAdd(url, tags, desc, msg){
+	if(url == "" || tags == ""){
+		msg.author.send("Commande incorrecte.\nTape '!bm add help' pour plus d'information");
 		return false;
 	}
-	if(sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+args[1]+"';").get()['cmp'] > 0){
+	if(!isURL(url)){
+		msg.author.send("Format de l'url incorrect.\nTape '!bm add help' pour plus d'information");
+		return false;
+	}
+	if(sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+url+"';").get()['cmp'] > 0){
 		msg.author.send("Ce lien est déjà enregistré.");
-		return false;
-	}
-	if(!isURL(args[1])){
-		msg.author.send("Format de l'url incorrect.\nTape '!bm help' pour plus d'information");
 		return false;
 	}
 
 	const bm = {
 		id : '',
-		link : args[1],
-		tags : args[2].split(','),
+		link : url,
+		tags : tags.split(','),
+		description : desc,
 		point : 0,
 		user : msg.author.id
 	}
+
 	if(saveBookmark(bm)){
 		const reply = new Discord.RichEmbed();
 		reply.setColor('#0099FF');
-		reply.setTitle(shortenTitle(args[1]));
+		reply.setTitle(shortenTitle(bm['link']));
 		reply.setURL(bm['link']);
-		reply.setDescription('**Tags : **'+args[2]);
+		reply.setDescription('**Description : **'+bm['description']+'\n\n**Tags : **'+bm['tags']);
 		reply.setAuthor("Proposé par "+msg.author.username);
 
 		msg.channel.send(reply);
@@ -98,42 +106,33 @@ function bookmarkAdd(args, msg){
 	}
 }
 
-function bookmarkSearch(args, msg){
-    if(args.length != 2){
-        msg.author.send("Commande incorrecte.\nTape '!bm help' pour plus d'information");
-        return false;
-    }
-
+function bookmarkSearch(tags, msg) {
 	bookmarks = [];
-	args[1].split(',').forEach(function(tag){
-		console.log("searching for "+tag);
+	tags.split(',').forEach(function(tag){
 		bookmarksByTag = client.getBookmarkByTagName.all(tag);
 		bookmarks.push(bookmarksByTag);
-		console.log("FIND by "+tag+" : "+JSON.stringify(bookmarksByTag));
 	});
-	console.log("ALL BOOKMARK FIND : "+JSON.stringify(bookmarks));
-	console.log("ALL BOOKMARK FIND FILTER : "+JSON.stringify(getUnique(bookmarks,'id')));
 	bookmarks = getUnique(bookmarks,'id');
 
 	bookmarks[0].forEach(function(bm){
-		console.log("bm : "+JSON.stringify(bm));
 		const reply = new Discord.RichEmbed();
 		reply.setColor('#0099FF');
 		reply.setTitle(shortenTitle(bm['link']));
+		reply.setDescription(bm['description']);
 		reply.setURL(bm['link']);
-		/********* TODO ***********/
-		//reply.setAuthor("Proposé par "+client.fetchUser(bm['user']).username);
+		// TODO: SET AUTHOR id -> username
+		// reply.setAuthor("Proposé par "+client.fetchUser(bm['user']).username);
 
-		msg.author.send(reply);
+		if(isDMChannel(msg)){
+			msg.channel.send(reply);
+		}else{
+			msg.author.send(reply);
+		}
 	});
 	return true;
 }
 
-function bookmarkTag(args, msg){
-	if(args.length != 1){
-			msg.author.send("Commande incorrecte.\nTape '!bm help' pour plus d'information");
-			return false;
-	}
+function bookmarkTag(msg){
 	tags = client.getTagUseCount.all();
 	tag_list = "";
 	tags.forEach(function(tag){
@@ -143,7 +142,11 @@ function bookmarkTag(args, msg){
 	reply.setColor('#0099FF');
 	reply.setTitle('Liste des tags :');
 	reply.setDescription(tag_list);
-	msg.author.send(reply);
+	if(isDMChannel(msg)){
+		msg.channel.send(reply);
+	}else{
+		msg.author.send(reply);
+	}
 }
 
 client.on('ready', () => {
@@ -151,7 +154,7 @@ client.on('ready', () => {
 
 	const table_bookmark = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name = 'bookmark';").get();
 	if (!table_bookmark['count(*)']) {
-		sql.prepare("CREATE TABLE if not exists bookmark (id INTEGER PRIMARY KEY AUTOINCREMENT, link TEXT, point INTEGER, user INTEGER)").run();
+		sql.prepare("CREATE TABLE if not exists bookmark (id INTEGER PRIMARY KEY AUTOINCREMENT, link TEXT, description TEXT, point INTEGER, user INTEGER)").run();
 		sql.prepare("CREATE UNIQUE INDEX index_bookmark ON bookmark(id);").run();
 		sql.pragma("synchronous = 1");
 		sql.pragma("journal_mode = wal");
@@ -173,7 +176,7 @@ client.on('ready', () => {
         sql.pragma("journal_mode = wal");
     }
 
-	client.setBookmark = sql.prepare('INSERT INTO bookmark (link, point, user) VALUES (@link, @point, @user)');
+	client.setBookmark = sql.prepare('INSERT INTO bookmark (link, description, point, user) VALUES (@link, @description, @point, @user)');
 	client.setTag = sql.prepare('INSERT INTO tag(name) VALUES (@name)');
 	client.setBookmarkTag = sql.prepare('INSERT INTO bookmark_tag (id_bookmark, id_tag) VALUES (@id_bookmark, @id_tag)');
 
@@ -182,6 +185,7 @@ client.on('ready', () => {
 		SELECT DISTINCT \
 			bookmark.id AS id, \
 			bookmark.link AS link, \
+			bookmark.description AS description, \
 			bookmark.point AS point, \
 			bookmark.user AS user \
 		FROM \
@@ -207,33 +211,63 @@ client.on('ready', () => {
 client.on('message', msg => {
 	if (msg.content === 'ping') {
 		msg.reply('pong');
-		if(msg.channel.type != 'DMChannel'){
-			msg.delete(500);
-		}
+
 	}
 
-    if (msg.content.startsWith('!bm')){
+	if (msg.content.startsWith('!')){
+		console.log("|"+msg.channel.type+"|");
 		if(msg.channel.type != 'DMChannel'){
-			msg.delete(500);
+			//msg.delete(500);
 		}
-		const args = msg.content.slice(4).split(' ');
-		console.log("args"+JSON.stringify(args));
-		console.log("action : "+args[0]);
-		switch(args[0]){
-			case 'add':
-				bookmarkAdd(args, msg);
-			break;
-			case 'search':
-        bookmarkSearch(args, msg);
-			break;
-			case 'tag':
-				bookmarkTag(args, msg);
+
+		const regex_action = /^\!(.[^\s]+)/;
+		const action = (regex_action.exec(msg.content) === null)?"":regex_action.exec(msg.content)[1];
+
+		const regex_subaction = /^\!(?:.[^\s]+)\s+(.[^\s]+)/;
+		const subaction = (regex_subaction.exec(msg.content) === null)?"":regex_subaction.exec(msg.content)[1];
+
+		switch(action){
+			case 'bm':
+				switch(subaction){
+					case 'add':
+						regex_url = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.[^\s]+)/;
+						regex_tags = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.[^\s]+)/;
+						regex_desc = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.*)/;
+
+						url = (regex_url.exec(msg.content) === null)?"help":regex_url.exec(msg.content)[1];
+						tags = (regex_tags.exec(msg.content) === null)?"":regex_tags.exec(msg.content)[1];
+						desc = (regex_desc.exec(msg.content) === null)?"":regex_desc.exec(msg.content)[1];
+
+						if (url == "help"){
+							// TODO: send to help bm add
+						}else{
+							bookmarkAdd(url, tags, desc, msg);
+						}
+					break;
+					case 'search':
+						regex_tags = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.*)/;
+						tags = (regex_tags.exec(msg.content) === null)?"help":regex_tags.exec(msg.content)[1];
+						if (tags == "help"){
+							// TODO: send to help bm search
+						}else{
+		        			bookmarkSearch(tags, msg);
+						}
+					break;
+					case 'tag':
+						bookmarkTag(msg);
+					break;
+					case 'help':
+						// TODO: send to help bm
+					break;
+					default :
+						msg.author.send("Commande inconnue.\n Tape '!bm help' pour plus d'information");
+				}
 			break;
 			case 'help':
-				help('bm', msg);
+				// TODO: send to help global
 			break;
-			default :
-				msg.author.send("Commande inconnue.\n Tape '!bm help' pour plus d'information");
+			default:
+				msg.author.send("Commande inconnue.\n Tape '!help' pour plus d'information");
 		}
 	}
 });
