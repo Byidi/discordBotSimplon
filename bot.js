@@ -28,8 +28,9 @@ function help(func, msg){
 			reply.setColor('#0099FF');
 			reply.setTitle('Commande');
 			reply.setDescription('\
-				!bm add url tag1,tag2 : Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n \
-				!bm search tag1,tag2 : Recherche un lien en rapport avec les tags. Nombre de tag non limité \
+				**!bm add url tag1,tag2 **: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
+				**!bm search tag1,tag2 **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n\
+				**!bm tag **: Liste les tags enregistrés.\
 			');
 			msg.author.send(reply);
 		break;
@@ -37,8 +38,9 @@ function help(func, msg){
 			reply.setColor('#0099FF');
 			reply.setTitle('Commande');
 			reply.setDescription('\
-				!bm add url tag1,tag2 : Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n \
-				!bm search tag1,tag2 : Recherche un lien en rapport avec les tags. Nombre de tag non limité \
+				**!bm add url tag1,tag2 **: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
+				**!bm search tag1,tag2 **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n\
+				**!bm tag **: Liste les tags enregistrés.\
 			');
 			msg.author.send(reply);
 	}
@@ -127,6 +129,23 @@ function bookmarkSearch(args, msg){
 	return true;
 }
 
+function bookmarkTag(args, msg){
+	if(args.length != 1){
+			msg.author.send("Commande incorrecte.\nTape '!bm help' pour plus d'information");
+			return false;
+	}
+	tags = client.getTagUseCount.all();
+	tag_list = "";
+	tags.forEach(function(tag){
+		tag_list += '- '+tag['name']+' ('+tag['cmp']+' liens)\n';
+	});
+	const reply = new Discord.RichEmbed();
+	reply.setColor('#0099FF');
+	reply.setTitle('Liste des tags :');
+	reply.setDescription(tag_list);
+	msg.author.send(reply);
+}
+
 client.on('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 
@@ -172,6 +191,17 @@ client.on('ready', () => {
 			tag.id = bookmark_tag.id_tag AND \
 			tag.name = ? \
 	');
+	client.getTagUseCount = sql.prepare(' \
+		SELECT DISTINCT\
+			tag.id AS tid, \
+			tag.name, \
+			(SELECT count(*) FROM bookmark_tag WHERE bookmark_tag.id_tag=tag.id) AS cmp \
+		FROM \
+			tag,bookmark_tag \
+		WHERE \
+			tag.id = bookmark_tag.id_tag \
+		ORDER BY cmp DESC \
+	');
 });
 
 client.on('message', msg => {
@@ -194,7 +224,10 @@ client.on('message', msg => {
 				bookmarkAdd(args, msg);
 			break;
 			case 'search':
-                bookmarkSearch(args, msg);
+        bookmarkSearch(args, msg);
+			break;
+			case 'tag':
+				bookmarkTag(args, msg);
 			break;
 			case 'help':
 				help('bm', msg);
