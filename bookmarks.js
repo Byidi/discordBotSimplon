@@ -61,16 +61,37 @@ module.exports = {
     		ORDER BY cmp DESC \
     	');
     },
-    
-    help : function (msg){
+
+    help : function (msg, action='*'){
     	const reply = new Discord.RichEmbed();
+
 		reply.setColor('#0099FF');
 		reply.setTitle('Commande');
-		reply.setDescription('\
-			**!bm add url tag1,tag2 **: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
-			**!bm search tag1,tag2 **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n\
-			**!bm tag **: Liste les tags enregistrés.\
-		');
+
+        switch(action){
+            case 'add':
+                reply.setDescription('\
+        			**!bm add url tag1,tag2 description**: Ajoute un lien en rapport avec les tags. Nombre de tag illimité. \
+                ');
+            break;
+            case 'search':
+                reply.setDescription('\
+        			**!bm search tag1,tag2 **: Recherche un lien en rapport avec les tags. Nombre de tag illimité.\
+                ');
+            break;
+            case 'tag':
+                reply.setDescription('\
+        			**!bm tag **: Liste les tags enregistrés.\
+                ');
+            break;
+            default:
+                reply.setDescription('\
+        			**!bm add url tag1,tag2 description**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
+        			**!bm search tag1,tag2 **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n\
+        			**!bm tag **: Liste les tags enregistrés.\
+                ');
+        }
+
 		msg.author.send(reply);
     },
 
@@ -186,8 +207,7 @@ module.exports = {
                 desc = (regex_desc.exec(msg.content) === null)?"":regex_desc.exec(msg.content)[1];
 
                 if (url == "help"){
-                    // TODO: send to help bm add
-                    console.log("bm add help");
+                    this.help(msg,"add")
                 }else{
                     this.add(url, tags, desc, msg);
                 }
@@ -196,8 +216,7 @@ module.exports = {
                 regex_tags = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.*)/;
                 tags = (regex_tags.exec(msg.content) === null)?"help":regex_tags.exec(msg.content)[1];
                 if (tags == "help"){
-                    // TODO: send to help bm search
-                    console.log("bm search help");
+                    this.help(msg,"search");
                 }else{
                     this.search(tags, msg);
                 }
@@ -206,7 +225,6 @@ module.exports = {
                 this.tag(msg);
             break;
             case 'help':
-                console.log("bm help");
                 this.help(msg);
             break;
             default :

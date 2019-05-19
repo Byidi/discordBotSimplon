@@ -16,11 +16,8 @@ client.on('message', msg => {
 	}
 
 	if (msg.content.startsWith('!')){
-		console.log("---------------------------------");
-		console.log("msg : "+msg.content);
-
 		if(!tools.isDMChannel(msg)){
-			//msg.delete(500);
+			msg.delete(500);
 		}
 
 		const regex_action = /^\!(.[^\s]+)/;

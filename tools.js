@@ -1,12 +1,12 @@
 module.exports = {
     isDMChannel : function (msg){
-    	if(msg.channel.type != 'dm'){
+    	if(msg.channel.type == 'dm'){
     		return true;
     	}else{
     		return false;
     	}
     },
-    
+
     shorten : function (str, length){
     	return (str.length > length)?str.substring(0, length)+'...':str;
     },
