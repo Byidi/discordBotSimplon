@@ -1,8 +1,10 @@
 const Discord = require('discord.js');
-const client = new Discord.Client();
+const Tools = require('./tools.js');
 const SQLite = require("better-sqlite3");
+
+const client = new Discord.Client();
 const sql = new SQLite('./sql/bookmark.sqlite');
-const tools = require('./tools.js')
+
 
 module.exports = {
     prepareSql : function(){
@@ -36,18 +38,19 @@ module.exports = {
 
     	client.getTagByName = sql.prepare('SELECT * FROM tag WHERE name = ?');
     	client.getBookmarkByTagName = sql.prepare('\
-    		SELECT DISTINCT \
-    			bookmark.id AS id, \
-    			bookmark.link AS link, \
-    			bookmark.description AS description, \
-    			bookmark.point AS point, \
-    			bookmark.user AS user \
-    		FROM \
-    			bookmark, tag, bookmark_tag \
-    		WHERE \
-    			bookmark.id = bookmark_tag.id_bookmark AND \
-    			tag.id = bookmark_tag.id_tag AND \
-    			tag.name = ? \
+            SELECT DISTINCT \
+                bookmark.id AS id, \
+                bookmark.link AS link, \
+                bookmark.description AS description, \
+                bookmark.point AS point, \
+                bookmark.user AS user, \
+                (SELECT GROUP_CONCAT(tag.name) FROM tag, bookmark_tag WHERE bookmark_tag.id_bookmark = bookmark.id AND bookmark_tag.id_tag = tag.id) AS tags\
+            FROM \
+                bookmark, tag, bookmark_tag \
+            WHERE \
+                bookmark.id = bookmark_tag.id_bookmark AND \
+                tag.id = bookmark_tag.id_tag AND \
+                tag.name = ? \
     	');
     	client.getTagUseCount = sql.prepare(' \
     		SELECT DISTINCT\
@@ -115,7 +118,7 @@ module.exports = {
     		msg.author.send("Commande incorrecte.\nTape '!bm add help' pour plus d'information");
     		return false;
     	}
-    	if(!tools.isURL(url)){
+    	if(!Tools.isURL(url)){
     		msg.author.send("Format de l'url incorrect.\nTape '!bm add help' pour plus d'information");
     		return false;
     	}
@@ -136,7 +139,7 @@ module.exports = {
     	if(this.save(bm)){
     		const reply = new Discord.RichEmbed();
     		reply.setColor('#0099FF');
-    		reply.setTitle(tools.shorten(bm['link']),50);
+    		reply.setTitle(Tools.shorten(bm['link']),50);
     		reply.setURL(bm['link']);
     		reply.setDescription('**Description : **'+bm['description']+'\n\n**Tags : **'+bm['tags']);
     		reply.setAuthor("Proposé par "+msg.author.username);
@@ -155,23 +158,28 @@ module.exports = {
     		bookmarks_by_tag = client.getBookmarkByTagName.all(tag);
     		bookmarks_list.push(bookmarks_by_tag);
     	});
-    	bookmarks_list = tools.getUnique(bookmarks_list,'id');
+    	bookmarks_list = Tools.getUnique(bookmarks_list,'id');
 
-    	bookmarks_list[0].forEach(function(bm){
-    		const reply = new Discord.RichEmbed();
-    		reply.setColor('#0099FF');
-    		reply.setTitle(tools.shorten(bm['link']),50);
-    		reply.setDescription(bm['description']);
-    		reply.setURL(bm['link']);
-    		// TODO: SET AUTHOR id -> username
-    		// reply.setAuthor("Proposé par "+client.fetchUser(bm['user']).username);
+        const reply = new Discord.RichEmbed();
+        reply.setColor("#0099FF");
+        search_result = '';
+        bookmarks_list[0].forEach(function(bm){
+            search_result += '\
+            ['+Tools.shorten(bm['link'],50)+']('+Tools.shorten(bm['link'],50)+')\n\
+            **Description :**'+bm['description']+'\n\
+            **Tags : ** '+bm['tags']+'\n\n\
+            ';
+            // TODO: SET AUTHOR id -> username
+            // reply.setAuthor("Proposé par "+client.fetchUser(bm['user']).username);
 
-    		if(tools.isDMChannel(msg)){
-    			msg.channel.send(reply);
-    		}else{
-    			msg.author.send(reply);
-    		}
-    	});
+        });
+
+        reply.addField('Résultat de votre recherche : ', search_result, true);
+        if(Tools.isDMChannel(msg)){
+            msg.channel.send(reply);
+        }else{
+            msg.author.send(reply);
+        }
     	return true;
     },
 
@@ -185,7 +193,7 @@ module.exports = {
     	reply.setColor('#0099FF');
     	reply.setTitle('Liste des tags :');
     	reply.setDescription(tag_list);
-    	if(tools.isDMChannel(msg)){
+    	if(Tools.isDMChannel(msg)){
     		msg.channel.send(reply);
     	}else{
     		msg.author.send(reply);

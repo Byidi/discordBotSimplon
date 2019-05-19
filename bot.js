@@ -1,39 +1,42 @@
 const Discord = require('discord.js');
+const Auth = require('./auth.json');
+const Bookmarks = require('./bookmarks.js');
+const Tools = require('./tools.js');
+
 const client = new Discord.Client();
-const auth = require('./auth.json');
-const bookmarks = require('./bookmarks.js');
-const tools = require('./tools.js');
 
 client.on('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 
-	bookmarks.prepareSql();
+	Bookmarks.prepareSql();
 });
 
 client.on('message', msg => {
-	if (msg.content === 'ping') {
-		msg.reply('pong');
-	}
-
-	if (msg.content.startsWith('!')){
-		if(!tools.isDMChannel(msg)){
-			msg.delete(500);
+	if(Tools.isInAuthorizedChan(msg)){
+		if (msg.content === 'ping') {
+			msg.reply('pong');
 		}
 
-		const regex_action = /^\!(.[^\s]+)/;
-		const action = (regex_action.exec(msg.content) === null)?"":regex_action.exec(msg.content)[1];
+		if (msg.content.startsWith('!')){
+			if(!Tools.isDMChannel(msg)){
+				msg.delete(500);
+			}
 
-		switch(action){
-			case 'bm':
-				bookmarks.action(msg);
-			break;
-			case 'help':
-				// TODO: send to help global
-			break;
-			default:
-				msg.author.send("Commande inconnue.\n Tape '!help' pour plus d'information");
+			const regex_action = /^\!(.[^\s]+)/;
+			const action = (regex_action.exec(msg.content) === null)?"":regex_action.exec(msg.content)[1];
+
+			switch(action){
+				case 'bm':
+					Bookmarks.action(msg);
+				break;
+				case 'help':
+					// TODO: send to help global
+				break;
+				default:
+					msg.author.send("Commande inconnue.\n Tape '!help' pour plus d'information");
+			}
 		}
 	}
 });
 
-client.login(auth.discord_token);
+client.login(Auth.discord_token);
