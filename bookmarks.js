@@ -7,6 +7,13 @@ const sql = new SQLite('./sql/bookmark.sqlite');
 
 
 module.exports = {
+    command: function(){
+            return "bm";
+    },
+    log: function(){
+        console.log("Pluginbookmark loaded");
+    },
+
     prepareSql : function(){
         const table_bookmark = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name = 'bookmark';").get();
     	if (!table_bookmark['count(*)']) {
@@ -114,7 +121,7 @@ module.exports = {
     },
 
     add : function (url, tags, desc, msg){
-    	if(url == "" || tags == ""){
+    	if(url == null || tags == null){
     		msg.author.send("Commande incorrecte.\nTape '!bm add help' pour plus d'information");
     		return false;
     	}
@@ -141,7 +148,12 @@ module.exports = {
     		reply.setColor('#0099FF');
     		reply.setTitle(Tools.shorten(bm['link']),50);
     		reply.setURL(bm['link']);
-    		reply.setDescription('**Description : **'+bm['description']+'\n\n**Tags : **'+bm['tags']);
+            reply_description = "";
+            if(!bm['description'] == null){
+                reply_description += "**Description : **'+bm['description']+'\n\n";
+            }
+            reply_description += '**Tags : **'+bm['tags'];
+    		reply.setDescription(reply_description);
     		reply.setAuthor("Proposé par "+msg.author.username);
 
     		msg.channel.send(reply);
@@ -164,15 +176,20 @@ module.exports = {
         reply.setColor("#0099FF");
         search_result = '';
         bookmarks_list[0].forEach(function(bm){
-            search_result += '\
-            ['+Tools.shorten(bm['link'],50)+']('+Tools.shorten(bm['link'],50)+')\n\
-            **Description :**'+bm['description']+'\n\
-            **Tags : ** '+bm['tags']+'\n\n\
-            ';
+            console.log(JSON.stringify(bm));
+            search_result += '['+Tools.shorten(bm['link'],50)+']('+Tools.shorten(bm['link'],50)+')\n';
+            if(!bm['description'] == null){
+                search_result +=  "**Description : **'+bm['description']+'\n\n";
+            }
+            search_result += '**Tags : ** '+bm['tags']+'\n\n';
             // TODO: SET AUTHOR id -> username
             // reply.setAuthor("Proposé par "+client.fetchUser(bm['user']).username);
 
         });
+
+        if(search_result == ""){
+            search_result = "Aucun lien enregistrés ne correspond à votre recherche.";
+        }
 
         reply.addField('Résultat de votre recherche : ', search_result, true);
         if(Tools.isDMChannel(msg)){
@@ -201,32 +218,23 @@ module.exports = {
     },
 
     action : function(msg){
-        const regex_subaction = /^\!(?:.[^\s]+)\s+(.[^\s]+)/;
-        const subaction = (regex_subaction.exec(msg.content) === null)?"":regex_subaction.exec(msg.content)[1];
+        const regex = /^\!([^\s]+)[\s]?([^\s]+)?[\s]?([^\s]+)?[\s]?([^\s]+)?[\s]?(.+)?/;
+        msg_split = regex.exec(msg.content);
 
-        switch(subaction){
+        // console.log(msg_split[2]);
+        switch(msg_split[2]){
             case 'add':
-                regex_url = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.[^\s]+)/;
-                regex_tags = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.[^\s]+)/;
-                regex_desc = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.*)/;
-
-                url = (regex_url.exec(msg.content) === null)?"help":regex_url.exec(msg.content)[1];
-                tags = (regex_tags.exec(msg.content) === null)?"":regex_tags.exec(msg.content)[1];
-                desc = (regex_desc.exec(msg.content) === null)?"":regex_desc.exec(msg.content)[1];
-
-                if (url == "help"){
-                    this.help(msg,"add")
+                if (msg_split[3] == "help"){
+                    this.help(msg,"add");
                 }else{
-                    this.add(url, tags, desc, msg);
+                    this.add(msg_split[3], msg_split[4], msg_split[5], msg);
                 }
             break;
             case 'search':
-                regex_tags = /^\!(?:.[^\s]+)\s+(?:.[^\s]+)\s+(.*)/;
-                tags = (regex_tags.exec(msg.content) === null)?"help":regex_tags.exec(msg.content)[1];
-                if (tags == "help"){
+                if (msg_split[3] == "help"){
                     this.help(msg,"search");
                 }else{
-                    this.search(tags, msg);
+                    this.search(msg_split[3], msg);
                 }
             break;
             case 'tag':

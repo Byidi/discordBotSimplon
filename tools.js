@@ -24,7 +24,6 @@ module.exports = {
     },
 
     isInAuthorizedChan : function (msg){
-        console.log("lgt : "+Config.authorized_chan.length);
         if(Config.authorized_chan.indexOf(msg.channel.name) > -1 || this.isDMChannel(msg) || Config.authorized_chan.length == 0){
             return true;
         }else{
