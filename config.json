@@ -4,10 +4,6 @@
             {
                 "name" : "Bookmarks",
                 "file" : "./bookmarks.js"
-            },
-            {
-                "name" : "Php",
-                "file" : "./php.js"
             }
         ]
 }
