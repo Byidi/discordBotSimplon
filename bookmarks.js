@@ -43,12 +43,11 @@ module.exports = {
                 }
             break;
             case 'edit':
-                // TODO:
-                // if (msg_split[3] == "help"){
-                //     this.help(msg,"edit");
-                // }else{
-                //     this.edit(msg);
-                // }
+                if (msg_split[3] == "help"){
+                    this.help(msg,"edit");
+                }else{
+                    this.edit(msg);
+                }
             break;
             case 'tag':
                 this.tag(msg);
@@ -70,12 +69,12 @@ module.exports = {
         switch(action){
             case 'add':
                 reply.setDescription('\
-        			**!bm add url tag1,tag2 description**: Ajoute un lien en rapport avec les tags. Nombre de tag illimité. \
+        			**!bm add <url> <tag1,tag2,...> <description>(optionnel)**: Ajoute un lien en rapport avec les tags. Nombre de tag illimité. \
                 ');
             break;
             case 'search':
                 reply.setDescription('\
-        			**!bm search tag1,tag2 **: Recherche un lien en rapport avec les tags. Nombre de tag illimité.\
+        			**!bm search <tag1,tag2,...> **: Recherche un lien en rapport avec les tags. Nombre de tag illimité.\
                 ');
             break;
             case 'tag':
@@ -88,13 +87,21 @@ module.exports = {
                     **!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.\
                 ');
             break;
+            case 'edit':
+                reply.setDescription('\
+                    **!bm edit**: Liste les bookmarks que vous pouvez éditer.\n\
+                    **!bm edit <id> url:<url>(optionnel) tag:<tag1,tag2,...>(optionnel) desc:<description>(optionnel)**: Edit le bookmard <id>, si vous en êtes le créateur.\
+                ');
+            break;
             default:
                 reply.setDescription('\
-        			**!bm add <url> <tag1,tag2> <description>**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
+        			**!bm add <url> <tag1,tag2> <description>(optionnel)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
         			**!bm search <tag1,tag2> **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n\
         			**!bm tag **: Liste les tags enregistrés.\n\
                     **!bm delete**: Liste les bookmarks que vous pouvez supprimer.\n\
-                    **!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.\
+                    **!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.\n\
+                    **!bm edit**: Liste les bookmarks que vous pouvez éditer.\n\
+                    **!bm edit <id> url:<url>(optionnel) tag:<tag1,tag2,...>(optionnel) desc:<description>(optionnel)**: Supprime le bookmard <id>, si vous en êtes le créateur.\
                 ');
         }
 
@@ -180,12 +187,33 @@ module.exports = {
     	return true;
     },
 
-    edit: function(msg){
-        // TODO:
+    edit: function(msg, id){
+        if(id === undefined){
+            bookmark_user = client.getBookmarkByUser.all(msg.author.id);
+
+            const reply = new discord.RichEmbed();
+            reply.setColor("#0099FF");
+            edit_result = ' ';
+            bookmark_user.forEach(function(bm){
+                edit_result += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
+                if(!bm['description'] == null){
+                    delete_result +=  "**Description : **'+bm['description']+'\n\n";
+                }
+            });
+            if(bookmark_user.length != 0){
+                reply.addField('Selectionner le bookmark que vous souhaiter éditer.\nPuis taper !bm edit <id> : ', delete_result, true);
+            }else{
+                reply.setTitle('Vous n\'avez enregistré aucun bookmark pour le moment.');
+            }
+            msg.author.send(reply);
+        }else if (id == parseInt(id, 10)){
+            // TODO: EDIT
+        }else{
+            this.help(msg, "edit");
+        }
     },
 
     delete: function(msg, id){
-        int_regex = new RegExp('[0-9]+');
         if(id === undefined){
             bookmark_user = client.getBookmarkByUser.all(msg.author.id);
 
@@ -199,24 +227,24 @@ module.exports = {
                 }
             });
             if(bookmark_user.length != 0){
-                reply.addField('Selectionner le lien que vous souhaiter supprimer.\nPuis taper !bm delete <id> : ', delete_result, true);
+                reply.addField('Selectionner le bookmark que vous souhaiter supprimer.\nPuis taper !bm delete <id> : ', delete_result, true);
             }else{
                 reply.setTitle('Vous n\'avez enregistré aucun bookmark pour le moment.');
             }
             msg.author.send(reply);
         }else if (id == parseInt(id, 10)){
             if(deleteBookmark(id)){
-            const reply = new discord.RichEmbed();
-    		reply.setColor('#0099FF');
-            reply.setTitle(' ');
-    		reply.setDescription("Votre bookmark a bien été supprimé.");
+                const reply = new discord.RichEmbed();
+        		reply.setColor('#0099FF');
+                reply.setTitle(' ');
+        		reply.setDescription("Votre bookmark a bien été supprimé.");
 
-    		msg.channel.send(reply);
-    		return true;
-    	}else{
-    		msg.author.send("Erreur lors de l'enregistrement de votre lien.");
-    		return false;
-    	}
+        		msg.channel.send(reply);
+        		return true;
+        	}else{
+        		msg.author.send("Erreur lors de l'enregistrement de votre lien.");
+        		return false;
+        	}
         }else{
             this.help(msg, "delete");
         }
