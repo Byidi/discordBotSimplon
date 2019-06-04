@@ -46,7 +46,7 @@ module.exports = {
                 if (msg_split[3] == "help"){
                     this.help(msg,"edit");
                 }else{
-                    this.edit(msg);
+                    this.edit(msg, msg_split[3]);
                 }
             break;
             case 'tag':
@@ -69,7 +69,7 @@ module.exports = {
         switch(action){
             case 'add':
                 reply.setDescription('\
-        			**!bm add <url> <tag1,tag2,...> <description>(optionnel)**: Ajoute un lien en rapport avec les tags. Nombre de tag illimité. \
+        			**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité \
                 ');
             break;
             case 'search':
@@ -90,18 +90,18 @@ module.exports = {
             case 'edit':
                 reply.setDescription('\
                     **!bm edit**: Liste les bookmarks que vous pouvez éditer.\n\
-                    **!bm edit <id> url:<url>(optionnel) tag:<tag1,tag2,...>(optionnel) desc:<description>(optionnel)**: Edit le bookmard <id>, si vous en êtes le créateur.\
+                    **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.\
                 ');
             break;
             default:
                 reply.setDescription('\
-        			**!bm add <url> <tag1,tag2> <description>(optionnel)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
+        			**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
         			**!bm search <tag1,tag2> **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n\
         			**!bm tag **: Liste les tags enregistrés.\n\
                     **!bm delete**: Liste les bookmarks que vous pouvez supprimer.\n\
                     **!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.\n\
                     **!bm edit**: Liste les bookmarks que vous pouvez éditer.\n\
-                    **!bm edit <id> url:<url>(optionnel) tag:<tag1,tag2,...>(optionnel) desc:<description>(optionnel)**: Supprime le bookmard <id>, si vous en êtes le créateur.\
+                    **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.\
                 ');
         }
 
@@ -197,17 +197,21 @@ module.exports = {
             bookmark_user.forEach(function(bm){
                 edit_result += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
                 if(!bm['description'] == null){
-                    delete_result +=  "**Description : **'+bm['description']+'\n\n";
+                    edit_result +=  "**Description : **'+bm['description']+'\n\n";
                 }
             });
             if(bookmark_user.length != 0){
-                reply.addField('Selectionner le bookmark que vous souhaiter éditer.\nPuis taper !bm edit <id> : ', delete_result, true);
+                reply.addField('Selectionner le bookmark que vous souhaiter éditer.\nPuis taper **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)** : ', edit_result, true);
             }else{
                 reply.setTitle('Vous n\'avez enregistré aucun bookmark pour le moment.');
             }
             msg.author.send(reply);
         }else if (id == parseInt(id, 10)){
             // TODO: EDIT
+            let regex = /\!bm edit ([0-9]+)\s+?(?:url:([^\s]+))?[\s]?(?:tag:([^\s]+))?[\s]?(?:desc:(.+))?[\s]?/;
+            msg_split = regex.exec(msg.content);
+            console.log("msg.content : "+msg.content);
+            console.log("EDIT SPLIT : "+JSON.stringify(msg_split));
         }else{
             this.help(msg, "edit");
         }
