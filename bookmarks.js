@@ -219,7 +219,18 @@ module.exports = {
         		return false;
         	}else{
                 if(saveEdit(msg, id, msgSplit[1], msgSplit[2], msgSplit[3])){
-                    msg.author.send("Mise à jour bien enregistré.");
+                    //msg.author.send("Mise à jour bien enregistré.");
+                    var bm = client.getBookmarkById.get(id);
+                    const reply = new discord.RichEmbed();
+            		reply.setColor('#0099FF');
+                    editResult = '['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
+                    editResult += '**Tags : ** '+bm['tags']+'\n';
+                    if(bm['description'] != null){
+                        editResult +=  "**Description : **"+bm['description']+"\n\n";
+                    }
+                    reply.addField('Modification bien enregistrée. : ', editResult, true);
+
+            		msg.author.send(reply);
             		return true;
                 }else{
             		msg.author.send("Erreur lors de l'enregistrement de votre édition.");
@@ -376,6 +387,19 @@ function prepareSql(){
             bookmark.id = bookmark_tag.id_bookmark AND \
             tag.id = bookmark_tag.id_tag AND \
             tag.name = ? \
+    ');
+    client.getBookmarkById = sql.prepare('\
+        SELECT \
+            bookmark.id AS id, \
+            bookmark.link AS link, \
+            bookmark.description AS description, \
+            bookmark.point AS point, \
+            bookmark.user AS user, \
+            (SELECT GROUP_CONCAT(tag.name) FROM tag, bookmark_tag WHERE bookmark_tag.id_bookmark = bookmark.id AND bookmark_tag.id_tag = tag.id) AS tags \
+        FROM \
+            bookmark \
+        WHERE \
+            bookmark.id = ? \
     ');
     client.getBookmarkByUser = sql.prepare('\
         SELECT \
