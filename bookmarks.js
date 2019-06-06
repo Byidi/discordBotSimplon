@@ -18,35 +18,35 @@ module.exports = {
 
     action : function(msg){
         const regex = /^\!([^\s]+)[\s]?([^\s]+)?[\s]?([^\s]+)?[\s]?([^\s]+)?[\s]?(.+)?/;
-        msg_split = regex.exec(msg.content);
+        let msgSplit = regex.exec(msg.content);
 
-        switch(msg_split[2]){
+        switch(msgSplit[2]){
             case 'add':
-                if (msg_split[3] == "help"){
+                if (msgSplit[3] == "help"){
                     this.help(msg,"add");
                 }else{
-                    this.add(msg_split[3], msg_split[4], msg_split[5], msg);
+                    this.add(msgSplit[3], msgSplit[4], msgSplit[5], msg);
                 }
             break;
             case 'search':
-                if (msg_split[3] == "help" || msg_split[3] === undefined){
+                if (msgSplit[3] == "help" || msgSplit[3] === undefined){
                     this.help(msg,"search");
                 }else{
-                    this.search(msg_split[3], msg);
+                    this.search(msgSplit[3], msg);
                 }
             break;
             case 'delete':
-                if (msg_split[3] == "help"){
+                if (msgSplit[3] == "help"){
                     this.help(msg,"delete");
                 }else{
-                    this.delete(msg, msg_split[3]);
+                    this.delete(msg, msgSplit[3]);
                 }
             break;
             case 'edit':
-                if (msg_split[3] == "help"){
+                if (msgSplit[3] == "help"){
                     this.help(msg,"edit");
                 }else{
-                    this.edit(msg, msg_split[3]);
+                    this.edit(msg, msgSplit[3]);
                 }
             break;
             case 'tag':
@@ -136,12 +136,12 @@ module.exports = {
     		reply.setColor('#0099FF');
     		reply.setTitle(tools.shorten(bm['link']),50);
     		reply.setURL(bm['link']);
-            reply_description = "";
+            let replyDescription = "";
             if(!bm['description'] == null){
-                reply_description += "**Description : **'+bm['description']+'\n\n";
+                replyDescription += "**Description : **'+bm['description']+'\n\n";
             }
-            reply_description += '**Tags : **'+bm['tags'];
-    		reply.setDescription(reply_description);
+            replyDescription += '**Tags : **'+bm['tags'];
+    		reply.setDescription(replyDescription);
     		reply.setAuthor("Proposé par "+msg.author.username);
 
     		msg.channel.send(reply);
@@ -153,32 +153,32 @@ module.exports = {
     },
 
     search: function (tags, msg) {
-    	bookmarks_list = [];
+    	bookmarksList = [];
     	tags.split(',').forEach(function(tag){
-    		bookmarks_by_tag = client.getBookmarkByTagName.all(tag);
-    		bookmarks_list.push(bookmarks_by_tag);
+    		bookmarksByTag = client.getBookmarkByTagName.all(tag);
+    		bookmarksList.push(bookmarksByTag);
     	});
-    	bookmarks_list = tools.getUnique(bookmarks_list,'id');
+    	bookmarksList = tools.getUnique(bookmarksList,'id');
 
         const reply = new discord.RichEmbed();
         reply.setColor("#0099FF");
-        search_result = '';
-        bookmarks_list[0].forEach(function(bm){
-            search_result += '['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
-            if(!bm['description'] == null){
-                search_result +=  "**Description : **'+bm['description']+'\n\n";
+        searchResult = '';
+        bookmarksList[0].forEach(function(bm){
+            searchResult += '['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
+            searchResult += '**Tags : ** '+bm['tags']+'\n';
+            if(bm['description'] != null){
+                searchResult +=  "**Description : **"+bm['description']+"\n\n";
             }
-            search_result += '**Tags : ** '+bm['tags']+'\n\n';
             // TODO: SET AUTHOR id -> username
             // reply.setAuthor("Proposé par "+client.fetchUser(bm['user']).username);
 
         });
 
-        if(search_result == ""){
-            search_result = "Aucun lien enregistrés ne correspond à votre recherche.";
+        if(searchResult == ""){
+            searchResult = "Aucun lien enregistrés ne correspond à votre recherche.";
         }
 
-        reply.addField('Résultat de votre recherche : ', search_result, true);
+        reply.addField('Résultat de votre recherche : ', searchResult, true);
         if(tools.isDMChannel(msg)){
             msg.channel.send(reply);
         }else{
@@ -189,29 +189,43 @@ module.exports = {
 
     edit: function(msg, id){
         if(id === undefined){
-            bookmark_user = client.getBookmarkByUser.all(msg.author.id);
+            bookmarkUser = client.getBookmarkByUser.all(msg.author.id);
 
             const reply = new discord.RichEmbed();
             reply.setColor("#0099FF");
-            edit_result = ' ';
-            bookmark_user.forEach(function(bm){
-                edit_result += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
+            editResult = ' ';
+            bookmarkUser.forEach(function(bm){
+                editResult += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
                 if(!bm['description'] == null){
-                    edit_result +=  "**Description : **'+bm['description']+'\n\n";
+                    editResult +=  "**Description : **'+bm['description']+'\n\n";
                 }
             });
-            if(bookmark_user.length != 0){
-                reply.addField('Selectionner le bookmark que vous souhaiter éditer.\nPuis taper **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)** : ', edit_result, true);
+            if(bookmarkUser.length != 0){
+                reply.addField('Selectionner le bookmark que vous souhaiter éditer.\nPuis taper **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)** : ', editResult, true);
             }else{
                 reply.setTitle('Vous n\'avez enregistré aucun bookmark pour le moment.');
             }
             msg.author.send(reply);
         }else if (id == parseInt(id, 10)){
             // TODO: EDIT
-            let regex = /\!bm edit ([0-9]+)\s+?(?:url:([^\s]+))?[\s]?(?:tag:([^\s]+))?[\s]?(?:desc:(.+))?[\s]?/;
-            msg_split = regex.exec(msg.content);
-            console.log("msg.content : "+msg.content);
-            console.log("EDIT SPLIT : "+JSON.stringify(msg_split));
+            let regex = /\!bm edit (?:[0-9]+)(?:\s+)?(?:url:([^\s]+))?(?:\s+)?(?:tag:([^\s]+))?(?:\s+)?(?:desc:(.+)$)?/;
+            let msgSplit = regex.exec(msg);
+
+            if(msgSplit[1] != undefined && !tools.isURL(msgSplit[1])){
+        		msg.author.send("Format de l'url incorrect.");
+        		return false;
+        	}else if(msgSplit[1] != undefined && sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+msgSplit[1]+"';").get()['cmp'] > 0){
+        		msg.author.send("Ce lien est déjà enregistré.");
+        		return false;
+        	}else{
+                if(saveEdit(msg, id, msgSplit[1], msgSplit[2], msgSplit[3])){
+                    msg.author.send("Mise à jour bien enregistré.");
+            		return true;
+                }else{
+            		msg.author.send("Erreur lors de l'enregistrement de votre édition.");
+            		return false;
+                }
+            }
         }else{
             this.help(msg, "edit");
         }
@@ -219,19 +233,19 @@ module.exports = {
 
     delete: function(msg, id){
         if(id === undefined){
-            bookmark_user = client.getBookmarkByUser.all(msg.author.id);
+            bookmarkUser = client.getBookmarkByUser.all(msg.author.id);
 
             const reply = new discord.RichEmbed();
             reply.setColor("#0099FF");
-            delete_result = ' ';
-            bookmark_user.forEach(function(bm){
-                delete_result += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
+            deleteResult = ' ';
+            bookmarkUser.forEach(function(bm){
+                deleteResult += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
                 if(!bm['description'] == null){
-                    delete_result +=  "**Description : **'+bm['description']+'\n\n";
+                    deleteResult +=  "**Description : **'+bm['description']+'\n\n";
                 }
             });
-            if(bookmark_user.length != 0){
-                reply.addField('Selectionner le bookmark que vous souhaiter supprimer.\nPuis taper !bm delete <id> : ', delete_result, true);
+            if(bookmarkUser.length != 0){
+                reply.addField('Selectionner le bookmark que vous souhaiter supprimer.\nPuis taper !bm delete <id> : ', deleteResult, true);
             }else{
                 reply.setTitle('Vous n\'avez enregistré aucun bookmark pour le moment.');
             }
@@ -256,16 +270,15 @@ module.exports = {
 
     tag : function (msg){
     	tags = client.getTagUseCount.all();
-        console.log("TAGS : "+JSON.stringify(tags));
-    	tag_list = "";
+    	tagList = "";
     	tags.forEach(function(tag){
-    		tag_list += '- '+tag['tname']+' ('+tag['cmp']+' liens)\n';
+    		tagList += '- '+tag['tname']+' ('+tag['cmp']+' liens)\n';
     	});
     	const reply = new discord.RichEmbed();
     	reply.setColor('#0099FF');
         if(tags.length != 0){
 	       reply.setTitle('Liste des tags :');
-           reply.setDescription(tag_list);
+           reply.setDescription(tagList);
         }else{
             reply.setTitle("Aucun bookmark n'a été enregistré.")
         }
@@ -284,19 +297,40 @@ function deleteBookmark(id){
 };
 
 function save(bm){
-	let new_bookmark = client.setBookmark.run(bm);
-    bm['tags'].forEach(function(tag){
-        tag_by_name = client.getTagByName.all(tag);
-        if (tag_by_name.length == 0){
-            new_tag = client.setTag.run({name:tag});
-            tag_id = new_tag['lastInsertRowid'];
-        }else{
-            tag_id = tag_by_name[0]['id'];
-        }
-        client.setBookmarkTag.run({'id_bookmark':new_bookmark['lastInsertRowid'],'id_tag':tag_id});
-    });
-    return true;
+  let newBookmark = client.setBookmark.run(bm);
+  saveBookmarkTag(newBookmark['lastInsertRowid'], bm['tags']);
+  return true;
 };
+
+function saveEdit(msg, id, url=null, tag=null, desc=null){
+    if (url != null) {
+        let updateBookmarkUrl = client.updateBookmarkUrl.run(url, id);
+    }
+
+    if (tag != null) {
+        let deleteBookmarkTag = client.deleteBookmarkTag.run(id);
+        saveBookmarkTag(id, tag.split(','));
+    }
+
+    if (desc != null) {
+        let updateBookmarkDesc = client.updateBookmarkDesc.run(desc, id);
+    }
+
+    return true;
+}
+
+function saveBookmarkTag(id_bookmark, tags){
+    for( var i = 0; i < tags.length; i++){
+        var tagByName = client.getTagByName.all(tags[i]);
+        if (tagByName.length == 0){
+            var newTag = client.setTag.run({name:tags[i]});
+            var tagId = newTag['lastInsertRowid'];
+        }else{
+            var tagId = tagByName[0]['id'];
+        }
+        client.setBookmarkTag.run({'id_bookmark':id_bookmark, 'id_tag':tagId});
+    };
+}
 
 function prepareSql(){
     const tableBookmark = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name = 'bookmark';").get();
@@ -365,6 +399,11 @@ function prepareSql(){
             tag.id = bookmark_tag.id_tag \
         ORDER BY cmp DESC \
     ');
+
     client.deleteBookmarkTag = sql.prepare('DELETE FROM bookmark_tag WHERE bookmark_tag.id_bookmark = ?');
     client.deleteBookmark = sql.prepare('DELETE FROM bookmark WHERE bookmark.id = ? ');
+
+    client.updateBookmarkUrl = sql.prepare('UPDATE bookmark SET link = ? WHERE id = ? ');
+    client.updateBookmarkDesc = sql.prepare('UPDATE bookmark SET description = ? WHERE id = ? ');
+
 }
