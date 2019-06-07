@@ -1,3 +1,5 @@
+/*jshint esversion: 9 */
+
 const discord = require('discord.js');
 const tools = require('./tools.js');
 const auth = require('./auth.json');
@@ -8,7 +10,7 @@ var plugins = {};
 
 client.on('ready', () => {
 	config.plugins.forEach(function(p){
-		plugins[p['name']] = require(p['file']);
+		plugins[p.name] = require(p.file);
 	});
 
 	for(let name in plugins){
@@ -49,8 +51,8 @@ client.on('message', msg => {
 				switch(action){
 					case 'help':
 						for(var name in plugins){
-							if(typeof plugins[name].help !== 'undefined' && typeof plugins[name].help === 'function'){
-								plugins[name].help(msg);
+							if(typeof plugins.name.help !== 'undefined' && typeof plugins.name.help === 'function'){
+								plugins.name.help(msg);
 							}
 						}
 					break;

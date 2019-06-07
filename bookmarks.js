@@ -1,6 +1,8 @@
+/*jshint esversion: 9 */
+
 const discord = require('discord.js');
 const tools = require('./tools.js');
-const sqlite = require("better-sqlite3");
+const sqlite = require('better-sqlite3');
 
 const client = new discord.Client();
 const sql = new sqlite('./sql/bookmark.sqlite');
@@ -68,41 +70,30 @@ module.exports = {
 
         switch(action){
             case 'add':
-                reply.setDescription('\
-        			**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité \
-                ');
+                reply.setDescription('**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité');
             break;
             case 'search':
-                reply.setDescription('\
-        			**!bm search <tag1,tag2,...> **: Recherche un lien en rapport avec les tags. Nombre de tag illimité.\
-                ');
+                reply.setDescription('**!bm search <tag1,tag2,...> **: Recherche un lien en rapport avec les tags. Nombre de tag illimité.');
             break;
             case 'tag':
-                reply.setDescription('\
-        			**!bm tag **: Liste les tags enregistrés.\
-                ');
+                reply.setDescription('**!bm tag **: Liste les tags enregistrés.');
+            break;
             case 'delete':
-                reply.setDescription('\
-                    **!bm delete**: Liste les bookmarks que vous pouvez supprimer.\n\
-                    **!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.\
-                ');
+                reply.setDescription('**!bm delete**: Liste les bookmarks que vous pouvez supprimer.'+
+                '**!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.');
             break;
             case 'edit':
-                reply.setDescription('\
-                    **!bm edit**: Liste les bookmarks que vous pouvez éditer.\n\
-                    **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.\
-                ');
+                reply.setDescription('**!bm edit**: Liste les bookmarks que vous pouvez éditer.'+
+                '**!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.');
             break;
             default:
-                reply.setDescription('\
-        			**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n\
-        			**!bm search <tag1,tag2> **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n\
-        			**!bm tag **: Liste les tags enregistrés.\n\
-                    **!bm delete**: Liste les bookmarks que vous pouvez supprimer.\n\
-                    **!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.\n\
-                    **!bm edit**: Liste les bookmarks que vous pouvez éditer.\n\
-                    **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.\
-                ');
+                reply.setDescription('**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité'+
+                '**!bm search <tag1,tag2> **: Recherche un lien en rapport avec les tags. Nombre de tag non limité'+
+                '**!bm tag **: Liste les tags enregistrés.'+
+                '**!bm delete**: Liste les bookmarks que vous pouvez supprimer.'+
+                '**!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.'+
+                '**!bm edit**: Liste les bookmarks que vous pouvez éditer.'+
+                '**!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.');
         }
 
 		msg.author.send(reply);
@@ -117,7 +108,7 @@ module.exports = {
     		msg.author.send("Format de l'url incorrect.\nTape '!bm add help' pour plus d'information");
     		return false;
     	}
-    	if(sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+url+"';").get()['cmp'] > 0){
+    	if(sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+url+"';").get().cmp > 0){
     		msg.author.send("Ce lien est déjà enregistré.");
     		return false;
     	}
@@ -134,20 +125,20 @@ module.exports = {
     	if(save(bm)){
     		const reply = new discord.RichEmbed();
     		reply.setColor('#0099FF');
-    		reply.setTitle(tools.shorten(bm['link']),50);
-    		reply.setURL(bm['link']);
+    		reply.setTitle(tools.shorten(bm.link),50);
+    		reply.setURL(bm.link);
             let replyDescription = "";
-            if(!bm['description'] == null){
-                replyDescription += "**Description : **'+bm['description']+'\n\n";
+            if(bm.description != null){
+                replyDescription += "**Description : **"+bm.description + "\n\n";
             }
-            replyDescription += '**Tags : **'+bm['tags'];
+            replyDescription += "**Tags : **" + bm.tags;
     		reply.setDescription(replyDescription);
     		reply.setAuthor("Proposé par "+msg.author.username);
 
     		msg.channel.send(reply);
     		return true;
     	}else{
-    		msg.author.send("Erreur lors de l'enregistrement de votre lien.");
+    		msg.author.send("Erreur lors de l\'enregistrement de votre lien.");
     		return false;
     	}
     },
@@ -158,16 +149,16 @@ module.exports = {
     		bookmarksByTag = client.getBookmarkByTagName.all(tag);
     		bookmarksList.push(bookmarksByTag);
     	});
-    	bookmarksList = tools.getUnique(bookmarksList,'id');
+    	bookmarksList = tools.getUnique(bookmarksList, "id");
 
         const reply = new discord.RichEmbed();
         reply.setColor("#0099FF");
-        searchResult = '';
+        searchResult = "";
         bookmarksList[0].forEach(function(bm){
-            searchResult += '['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
-            searchResult += '**Tags : ** '+bm['tags']+'\n';
-            if(bm['description'] != null){
-                searchResult +=  "**Description : **"+bm['description']+"\n\n";
+            searchResult += '['+tools.shorten(bm.link,50)+']('+tools.shorten(bm.link,50)+")\n";
+            searchResult += "**Tags : **" + bm.tags + "\n";
+            if(bm.description != null){
+                searchResult +=  "**Description : **" + bm.description + "\n\n";
             }
             // TODO: SET AUTHOR id -> username
             // reply.setAuthor("Proposé par "+client.fetchUser(bm['user']).username);
@@ -190,13 +181,12 @@ module.exports = {
     edit: function(msg, id){
         if(id === undefined){
             bookmarkUser = client.getBookmarkByUser.all(msg.author.id);
-
             const reply = new discord.RichEmbed();
             reply.setColor("#0099FF");
             editResult = ' ';
             bookmarkUser.forEach(function(bm){
-                editResult += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
-                if(!bm['description'] == null){
+                editResult += bm.id + ') [' + tools.shorten(bm.link, 50) + '](' + tools.shorten(bm.link, 50) + ")\n";
+                if(bm.description != null){
                     editResult +=  "**Description : **'+bm['description']+'\n\n";
                 }
             });
@@ -206,27 +196,25 @@ module.exports = {
                 reply.setTitle('Vous n\'avez enregistré aucun bookmark pour le moment.');
             }
             msg.author.send(reply);
-        }else if (id == parseInt(id, 10)){
-            // TODO: EDIT
+        }else if (id == parseInt(id, 10)) {
             let regex = /\!bm edit (?:[0-9]+)(?:\s+)?(?:url:([^\s]+))?(?:\s+)?(?:tag:([^\s]+))?(?:\s+)?(?:desc:(.+)$)?/;
             let msgSplit = regex.exec(msg);
 
             if(msgSplit[1] != undefined && !tools.isURL(msgSplit[1])){
         		msg.author.send("Format de l'url incorrect.");
         		return false;
-        	}else if(msgSplit[1] != undefined && sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+msgSplit[1]+"';").get()['cmp'] > 0){
+        	}else if(msgSplit[1] != undefined && sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+msgSplit[1]+"';").get().cmp > 0){
         		msg.author.send("Ce lien est déjà enregistré.");
         		return false;
         	}else{
-                if(saveEdit(msg, id, msgSplit[1], msgSplit[2], msgSplit[3])){
-                    //msg.author.send("Mise à jour bien enregistré.");
+                if(saveEdit(msg, id, msgSplit[1], msgSplit[2], msgSplit[3])) {
                     var bm = client.getBookmarkById.get(id);
                     const reply = new discord.RichEmbed();
             		reply.setColor('#0099FF');
-                    editResult = '['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
-                    editResult += '**Tags : ** '+bm['tags']+'\n';
-                    if(bm['description'] != null){
-                        editResult +=  "**Description : **"+bm['description']+"\n\n";
+                    editResult = '['+tools.shorten(bm.link, 50) + '](' + tools.shorten(bm.link, 50) + ")\n";
+                    editResult += '**Tags : ** '+bm.tags + "\n";
+                    if(bm.description != null){
+                        editResult +=  "**Description : **" + bm.description + "\n\n";
                     }
                     reply.addField('Modification bien enregistrée. : ', editResult, true);
 
@@ -250,9 +238,9 @@ module.exports = {
             reply.setColor("#0099FF");
             deleteResult = ' ';
             bookmarkUser.forEach(function(bm){
-                deleteResult += bm['id']+') ['+tools.shorten(bm['link'],50)+']('+tools.shorten(bm['link'],50)+')\n';
-                if(!bm['description'] == null){
-                    deleteResult +=  "**Description : **'+bm['description']+'\n\n";
+                deleteResult += bm.id + ') ['+tools.shorten(bm.link, 50) + '](' + tools.shorten(bm.link, 50) + ")\n";
+                if(bm.description != null){
+                    deleteResult +=  "**Description : **" + bm.description + "\n\n";
                 }
             });
             if(bookmarkUser.length != 0){
@@ -283,7 +271,7 @@ module.exports = {
     	tags = client.getTagUseCount.all();
     	tagList = "";
     	tags.forEach(function(tag){
-    		tagList += '- '+tag['tname']+' ('+tag['cmp']+' liens)\n';
+    		tagList += '- ' + tag.tname + ' (' + tag.cmp + ' liens)\n';
     	});
     	const reply = new discord.RichEmbed();
     	reply.setColor('#0099FF');
@@ -291,7 +279,7 @@ module.exports = {
 	       reply.setTitle('Liste des tags :');
            reply.setDescription(tagList);
         }else{
-            reply.setTitle("Aucun bookmark n'a été enregistré.")
+            reply.setTitle("Aucun bookmark n'a été enregistré.");
         }
     	if(tools.isDMChannel(msg)){
     		msg.channel.send(reply);
@@ -299,19 +287,19 @@ module.exports = {
     		msg.author.send(reply);
     	}
     }
-}
+};
 
 function deleteBookmark(id){
     let deleteBookmarkTag = client.deleteBookmarkTag.run(id);
     let deleteBookmark = client.deleteBookmark.run(id);
     return true;
-};
+}
 
 function save(bm){
   let newBookmark = client.setBookmark.run(bm);
-  saveBookmarkTag(newBookmark['lastInsertRowid'], bm['tags']);
+  saveBookmarkTag(newBookmark.lastInsertRowid, bm.tags);
   return true;
-};
+}
 
 function saveEdit(msg, id, url=null, tag=null, desc=null){
     if (url != null) {
@@ -333,14 +321,15 @@ function saveEdit(msg, id, url=null, tag=null, desc=null){
 function saveBookmarkTag(id_bookmark, tags){
     for( var i = 0; i < tags.length; i++){
         var tagByName = client.getTagByName.all(tags[i]);
+        var tagId = null;
         if (tagByName.length == 0){
             var newTag = client.setTag.run({name:tags[i]});
-            var tagId = newTag['lastInsertRowid'];
+            tagId = newTag.lastInsertRowid;
         }else{
-            var tagId = tagByName[0]['id'];
+            tagId = tagByName[0].id;
         }
         client.setBookmarkTag.run({'id_bookmark':id_bookmark, 'id_tag':tagId});
-    };
+    }
 }
 
 function prepareSql(){
@@ -373,56 +362,52 @@ function prepareSql(){
     client.setBookmarkTag = sql.prepare('INSERT INTO bookmark_tag (id_bookmark, id_tag) VALUES (@id_bookmark, @id_tag)');
 
     client.getTagByName = sql.prepare('SELECT * FROM tag WHERE name = ?');
-    client.getBookmarkByTagName = sql.prepare('\
-        SELECT DISTINCT \
-            bookmark.id AS id, \
-            bookmark.link AS link, \
-            bookmark.description AS description, \
-            bookmark.point AS point, \
-            bookmark.user AS user, \
-            (SELECT GROUP_CONCAT(tag.name) FROM tag, bookmark_tag WHERE bookmark_tag.id_bookmark = bookmark.id AND bookmark_tag.id_tag = tag.id) AS tags\
-        FROM \
-            bookmark, tag, bookmark_tag \
-        WHERE \
-            bookmark.id = bookmark_tag.id_bookmark AND \
-            tag.id = bookmark_tag.id_tag AND \
-            tag.name = ? \
-    ');
-    client.getBookmarkById = sql.prepare('\
-        SELECT \
-            bookmark.id AS id, \
-            bookmark.link AS link, \
-            bookmark.description AS description, \
-            bookmark.point AS point, \
-            bookmark.user AS user, \
-            (SELECT GROUP_CONCAT(tag.name) FROM tag, bookmark_tag WHERE bookmark_tag.id_bookmark = bookmark.id AND bookmark_tag.id_tag = tag.id) AS tags \
-        FROM \
-            bookmark \
-        WHERE \
-            bookmark.id = ? \
-    ');
-    client.getBookmarkByUser = sql.prepare('\
-        SELECT \
-            bookmark.id AS id,\
-            bookmark.link AS link,\
-            bookmark.description AS description,\
-            bookmark.point AS point \
-        FROM \
-            bookmark \
-        WHERE \
-            bookmark.user = ?\
-    ');
-    client.getTagUseCount = sql.prepare(' \
-        SELECT DISTINCT\
-            tag.id AS tid, \
-            tag.name AS tname, \
-            (SELECT count(*) FROM bookmark_tag WHERE bookmark_tag.id_tag=tag.id) AS cmp \
-        FROM \
-            tag, bookmark_tag \
-        WHERE \
-            tag.id = bookmark_tag.id_tag \
-        ORDER BY cmp DESC \
-    ');
+    client.getBookmarkByTagName = sql.prepare(
+        'SELECT DISTINCT '+
+            'bookmark.id AS id,' +
+            'bookmark.link AS link,' +
+            'bookmark.description AS description,' +
+            'bookmark.point AS point,' +
+            'bookmark.user AS user,' +
+            '(SELECT GROUP_CONCAT(tag.name) FROM tag, bookmark_tag WHERE bookmark_tag.id_bookmark = bookmark.id AND bookmark_tag.id_tag = tag.id) AS tags ' +
+        'FROM ' +
+            'bookmark, tag, bookmark_tag ' +
+        'WHERE ' +
+            'bookmark.id = bookmark_tag.id_bookmark AND ' +
+            'tag.id = bookmark_tag.id_tag AND ' +
+            'tag.name = ?');
+    client.getBookmarkById = sql.prepare(
+        'SELECT '+
+            'bookmark.id AS id, '+
+            'bookmark.link AS link, '+
+            'bookmark.description AS description, '+
+            'bookmark.point AS point, '+
+            'bookmark.user AS user, '+
+            '(SELECT GROUP_CONCAT(tag.name) FROM tag, bookmark_tag WHERE bookmark_tag.id_bookmark = bookmark.id AND bookmark_tag.id_tag = tag.id) AS tags '+
+        'FROM '+
+            'bookmark '+
+        'WHERE '+
+            'bookmark.id = ? ');
+    client.getBookmarkByUser = sql.prepare(
+        'SELECT '+
+            'bookmark.id AS id, '+
+            'bookmark.link AS link,'+
+            'bookmark.description AS description,'+
+            'bookmark.point AS point '+
+        'FROM '+
+            'bookmark '+
+        'WHERE '+
+            'bookmark.user = ?');
+    client.getTagUseCount = sql.prepare(
+        'SELECT DISTINCT '+
+            'tag.id AS tid, '+
+            'tag.name AS tname, '+
+            '(SELECT count(*) FROM bookmark_tag WHERE bookmark_tag.id_tag=tag.id) AS cmp '+
+        'FROM '+
+            'tag, bookmark_tag '+
+        'WHERE '+
+            'tag.id = bookmark_tag.id_tag '+
+        'ORDER BY cmp DESC ');
 
     client.deleteBookmarkTag = sql.prepare('DELETE FROM bookmark_tag WHERE bookmark_tag.id_bookmark = ?');
     client.deleteBookmark = sql.prepare('DELETE FROM bookmark WHERE bookmark.id = ? ');
