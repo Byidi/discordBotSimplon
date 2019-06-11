@@ -1,7 +1,7 @@
 /*jshint esversion: 9 */
 
 const discord = require('discord.js');
-const tools = require('./tools.js');
+const tools = require('../../tools.js');
 const sqlite = require('better-sqlite3');
 
 const client = new discord.Client();
@@ -79,20 +79,20 @@ module.exports = {
                 reply.setDescription('**!bm tag **: Liste les tags enregistrés.');
             break;
             case 'delete':
-                reply.setDescription('**!bm delete**: Liste les bookmarks que vous pouvez supprimer.'+
+                reply.setDescription('**!bm delete**: Liste les bookmarks que vous pouvez supprimer.\n'+
                 '**!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.');
             break;
             case 'edit':
-                reply.setDescription('**!bm edit**: Liste les bookmarks que vous pouvez éditer.'+
+                reply.setDescription('**!bm edit**: Liste les bookmarks que vous pouvez éditer.\n'+
                 '**!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.');
             break;
             default:
-                reply.setDescription('**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité'+
-                '**!bm search <tag1,tag2> **: Recherche un lien en rapport avec les tags. Nombre de tag non limité'+
-                '**!bm tag **: Liste les tags enregistrés.'+
-                '**!bm delete**: Liste les bookmarks que vous pouvez supprimer.'+
-                '**!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.'+
-                '**!bm edit**: Liste les bookmarks que vous pouvez éditer.'+
+                reply.setDescription('**!bm add <url> <tag1,tag2> (<description>)**: Ajoute un lien en rapport avec les tags. Nombre de tag non limité\n'+
+                '**!bm search <tag1,tag2> **: Recherche un lien en rapport avec les tags. Nombre de tag non limité\n'+
+                '**!bm tag **: Liste les tags enregistrés.\n'+
+                '**!bm delete**: Liste les bookmarks que vous pouvez supprimer.\n'+
+                '**!bm delete <id>**: Supprime le bookmard <id>, si vous en êtes le créateur.\n'+
+                '**!bm edit**: Liste les bookmarks que vous pouvez éditer.\n'+
                 '**!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.');
         }
 

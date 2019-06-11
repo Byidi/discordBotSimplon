@@ -10,7 +10,7 @@ var plugins = {};
 
 client.on('ready', () => {
 	config.plugins.forEach(function(p){
-		plugins[p.name] = require(p.file);
+		plugins[p.name] = require("./plugins/" + p.file);
 	});
 
 	for(let name in plugins){
@@ -19,7 +19,7 @@ client.on('ready', () => {
 		}
 	};
 
-	console.log(`Logged in as ${client.user.tag}!`);
+	console.log("Logged in as " + client.user.tag + " !");
 
 });
 

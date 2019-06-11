@@ -3,7 +3,7 @@
     "plugins": [
             {
                 "name" : "Bookmarks",
-                "file" : "./bookmarks.js"
+                "file" : "bookmarks/main.js"
             }
         ]
 }
