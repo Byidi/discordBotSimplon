@@ -1,5 +1,6 @@
 /*jshint esversion: 9 */
 
+const discord = require('discord.js');
 const Config = require('./config.json');
 
 module.exports = {

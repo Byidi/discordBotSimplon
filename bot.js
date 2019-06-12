@@ -57,7 +57,7 @@ client.on('message', msg => {
 						}
 					break;
 					default:
-						msg.author.send("Commande inconnue.\n Tape '!help' pour plus d'information");
+						tools.reply(msg, 'error', 'private', 'Commande inconnue', 'Tape \'!help\' pour plus d\'information');
 				}
 			}
 		}

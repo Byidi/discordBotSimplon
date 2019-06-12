@@ -48,7 +48,7 @@ module.exports = {
                     help();
                 break;
                 default :
-                    reply('error', 'private', 'Commande inconnue', 'Tape \'!bm help\' pour plus d\'information');
+                    tools.reply(msg, 'error', 'private', 'Commande inconnue', 'Tape \'!bm help\' pour plus d\'information');
             }
         }
     }
@@ -158,22 +158,22 @@ function help(action='*'){
         description += '**!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)**: Supprime le bookmard <id>, si vous en êtes le créateur.\n';
     }
 
-    reply('success', 'private', 'Information', description);
+    tools.reply(msg, 'success', 'private', 'Information', description);
 }
 
 function add(args){
     const addRegex = /^([^\s]+)?[\s]?([^\s]+)?[\s]?(.+)?/;
     let addSplit = addRegex.exec(args);
     if(addSplit[1] == null || addSplit[2] == null){
-        reply('error', 'private', 'Commande incorrect', 'Tape \'!bm add help\' pour plus d\'information');
+        tools.reply(msg, 'error', 'private', 'Commande incorrect', 'Tape \'!bm add help\' pour plus d\'information');
         return false;
     }
     if(!tools.isURL(addSplit[1])){
-        reply('error', 'private', 'Format de l\'url incorrect', 'Tape \'!bm add help\' pour plus d\'information');
+        tools.reply(msg, 'error', 'private', 'Format de l\'url incorrect', 'Tape \'!bm add help\' pour plus d\'information');
         return false;
     }
     if(sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+addSplit[1]+"';").get().cmp > 0){
-        reply('warning', 'private', 'Impossible d\'enregistrer votre lien', 'Ce lien est déjà enregistré.');
+        tools.reply(msg, 'warning', 'private', 'Impossible d\'enregistrer votre lien', 'Ce lien est déjà enregistré.');
         return false;
     }
 
@@ -187,10 +187,10 @@ function add(args){
     };
 
     if(save(bm)){
-        reply('success', 'public', 'Lien enregistré par '+msg.author.username, "add", bm);
+        tools.reply(msg, 'success', 'public', 'Lien enregistré par '+msg.author.username, "add", bm);
         return true;
     }else{
-		reply('error', 'private', 'Erreur', 'Une erreur a eu lieu lors de l\'enregistrement de votre lien.');
+		tools.reply(msg, 'error', 'private', 'Erreur', 'Une erreur a eu lieu lors de l\'enregistrement de votre lien.');
 		return false;
 	}
 }
@@ -236,9 +236,9 @@ function tag(){
     });
 
     if(tags.length != 0){
-       reply('success', 'private', 'Liste des tags :', tagList);
+        tools.reply(msg, 'success', 'private', 'Liste des tags :', tagList);
     }else{
-        reply('warning', 'private', 'Liste des tags :','Aucun bookmark n\'a été enregistré.');
+        tools.reply(msg, 'warning', 'private', 'Liste des tags :','Aucun bookmark n\'a été enregistré.');
     }
 }
 
@@ -262,9 +262,9 @@ function search (tags) {
 
     if(searchResult == ""){
         searchResult = "Aucun lien enregistrés ne correspond à votre recherche.";
-        reply('warning', 'private', 'Résultat de votre recherche :', 'Aucun lien enregistré ne correspond à votre recherche.');
+        tools.reply(msg, 'warning', 'private', 'Résultat de votre recherche :', 'Aucun lien enregistré ne correspond à votre recherche.');
     }else{
-        reply('success', 'private', 'Résultat de votre recherche :', searchResult);
+        tools.reply(msg, 'success', 'private', 'Résultat de votre recherche :', searchResult);
     }
 }
 
@@ -287,15 +287,15 @@ function remove(id=null){
     if(id == null){
         let bookmarkUser = listBookmarkUser(msg.author.id);
         if(bookmarkUser != ''){
-            reply('success', 'private', 'Selectionner le bookmark que vous souhaiter supprimer.\nPuis taper !bm delete <id> : ', bookmarkUser);
+            tools.reply(msg, 'success', 'private', 'Selectionner le bookmark que vous souhaiter supprimer.\nPuis taper !bm delete <id> : ', bookmarkUser);
         }else{
-            reply('warning', 'private', 'Aucun bookmark à supprimer', 'Vous n\'avez enregistré aucun bookmark pour le moment.');
+            tools.reply(msg, 'warning', 'private', 'Aucun bookmark à supprimer', 'Vous n\'avez enregistré aucun bookmark pour le moment.');
         }
     }else if (id == parseInt(id, 10)){
         if(deleteBookmark(id)){
-            reply('success', 'private', 'Suppresion', 'Votre bookmark a bien été supprimé.');
+            tools.reply(msg, 'success', 'private', 'Suppresion', 'Votre bookmark a bien été supprimé.');
         }else{
-            reply('error', 'private', 'Suppresion', 'Erreur lors de la suppresion du bookmark.');
+            tools.reply(msg, 'error', 'private', 'Suppresion', 'Erreur lors de la suppresion du bookmark.');
         }
     }else{
         help("delete");
@@ -323,24 +323,24 @@ function edit(args){
     if(editSplit[1] == undefined){
         let bookmarkUser = listBookmarkUser(msg.author.id);
         if(bookmarkUser != ''){
-            reply('success', 'private', 'Selectionner le bookmark que vous souhaiter éditer.\nPuis taper !bm delete <id> : ', bookmarkUser);
+            tools.reply(msg, 'success', 'private', 'Selectionner le bookmark que vous souhaiter éditer.\nPuis taper !bm delete <id> : ', bookmarkUser);
         }else{
-            reply('warning', 'private', 'Aucun bookmark à éditer', 'Vous n\'avez enregistré aucun bookmark pour le moment.');
+            tools.reply(msg, 'warning', 'private', 'Aucun bookmark à éditer', 'Vous n\'avez enregistré aucun bookmark pour le moment.');
         }
     }else if(editSplit[1] == parseInt(editSplit[1],10)){
         if(editSplit[2] != undefined && !tools.isURL(editSplit[2])){
-            reply('error', 'private', 'Erreur d\'édition', 'Format de l\'url invalide');
+            tools.reply(msg, 'error', 'private', 'Erreur d\'édition', 'Format de l\'url invalide');
         }else if(editSplit[2] != undefined && sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+editSplit[2]+"';").get().cmp > 0){
-            reply('warning', 'private', 'Erreur d\'édition', 'Ce lien est déjà enregistré.');
+            tools.reply(msg, 'warning', 'private', 'Erreur d\'édition', 'Ce lien est déjà enregistré.');
         }else{
             if(saveEdit(editSplit[1], editSplit[2], editSplit[3], editSplit[4])) {
-                reply('success', 'private', 'Edition', 'Modification bien enregistrée');
+                tools.reply(msg, 'success', 'private', 'Edition', 'Modification bien enregistrée');
             }else{
-                reply('error', 'private', 'Erreur d\'édition', 'Erreur lors de l\'enregistrement de votre modification');
+                tools.reply(msg, 'error', 'private', 'Erreur d\'édition', 'Erreur lors de l\'enregistrement de votre modification');
             }
         }
     }else{
-        reply('error', 'private', 'Commande inconnue', 'Tape \'!bm edit help\' pour plus d\'information');
+        tools.reply(msg, 'error', 'private', 'Commande inconnue', 'Tape \'!bm edit help\' pour plus d\'information');
     }
 }
 
