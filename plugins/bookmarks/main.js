@@ -138,47 +138,6 @@ function prepareSql(){
     client.updateBookmarkDesc = sql.prepare('UPDATE bookmark SET description = ? WHERE id = ? ');
 }
 
-function reply(type, channel, title, desc, obj=null){
-
-    const reply = new discord.RichEmbed();
-
-    switch(type){
-        case 'error':
-            reply.setColor('#ee0528');
-        break;
-        case 'success':
-            reply.setColor('#1dd506');
-        break;
-        case 'warning':
-            reply.setColor('#f18b05');
-        break;
-        default:
-            reply.setColor('#105ff7');
-    }
-
-    reply.setTitle(title);
-
-    let description = '';
-    switch(desc){
-        case 'add':
-            description += '[' + tools.shorten(obj.link,50) + '](' + tools.shorten(obj.link,50) + ')\n';
-            description += '**Tags : **' + obj.tags + '\n';
-            if(obj.description != null) {
-                description += '**Description : **' + obj.description + '\n';
-            }
-        break;
-        default:
-            description = desc;
-    }
-    reply.setDescription(description);
-
-    if (channel == 'private'){
-        msg.author.send(reply);
-    }else{
-        msg.channel.send(reply);
-    }
-}
-
 function help(action='*'){
     let description = "";
     if( action == 'add' || action == '*'){
