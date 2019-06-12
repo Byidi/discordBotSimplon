@@ -21,120 +21,38 @@ module.exports = {
 
     action : function(message){
         msg = message;
-        const regex = /^\!([^\s]+)[\s]?([^\s]+)?[\s]?([^\s]+)?[\s]?([^\s]+)?[\s]?(.+)?/;
+        const regex = /^\!([^\s]+)[\s]?([^\s]+)?[\s]?(.+)?/;
         let msgSplit = regex.exec(msg.content);
 
-        switch(msgSplit[2]){
-            case 'add':
-                if (msgSplit[3] == "help"){
-                    help("add");
-                }else{
-                    add(msgSplit[3], msgSplit[4], msgSplit[5]);
-                }
-            break;
-            case 'search':
-                if (msgSplit[3] == "help" || msgSplit[3] === undefined){
-                    help("search");
-                }else{
+        if(msgSplit[3] == "help"){
+            help(msgSplit[2]);
+        }else{
+            switch(msgSplit[2]){
+                case 'add':
+                    add(msgSplit[3]);
+                break;
+                case 'search':
                     search(msgSplit[3]);
-                }
-            break;
-            case 'delete':
-                if (msgSplit[3] == "help"){
-                    help("delete");
-                }else{
+                break;
+                case 'delete':
                     remove(msgSplit[3]);
-                }
-            break;
-            case 'edit':
-                if (msgSplit[3] == "help"){
-                    help("edit");
-                }else{
+                break;
+                case 'edit':
                     edit(msgSplit[3]);
-                }
-            break;
-            case 'tag':
-                tag();
-            break;
-            case 'help':
-                help();
-            break;
-            default :
-                msg.author.send("Commande inconnue.\n Tape '!bm help' pour plus d'information");
+                    console.log("edit");
+                break;
+                case 'tag':
+                    tag();
+                break;
+                case 'help':
+                    help();
+                break;
+                default :
+                    reply('error', 'private', 'Commande inconnue', 'Tape \'!bm help\' pour plus d\'information');
+            }
         }
     }
 };
-
-// TODO: NEED REWORK
-// function edit(msg, id){
-//     if(id === undefined){
-//         bookmarkUser = client.getBookmarkByUser.all(msg.author.id);
-//         const reply = new discord.RichEmbed();
-//         reply.setColor("#0099FF");
-//         editResult = ' ';
-//         bookmarkUser.forEach(function(bm){
-//             editResult += bm.id + ') [' + tools.shorten(bm.link, 50) + '](' + tools.shorten(bm.link, 50) + ")\n";
-//             if(bm.description != null){
-//                 editResult +=  "**Description : **'+bm['description']+'\n\n";
-//             }
-//         });
-//         if(bookmarkUser.length != 0){
-//             reply.addField('Selectionner le bookmark que vous souhaiter éditer.\nPuis taper **!bm edit <id> (url:<url>) (tag:<tag1,tag2,...>) (desc:<description>)** : ', editResult, true);
-//         }else{
-//             reply.setTitle('Vous n\'avez enregistré aucun bookmark pour le moment.');
-//         }
-//         msg.author.send(reply);
-//     }else if (id == parseInt(id, 10)) {
-//         let regex = /\!bm edit (?:[0-9]+)(?:\s+)?(?:url:([^\s]+))?(?:\s+)?(?:tag:([^\s]+))?(?:\s+)?(?:desc:(.+)$)?/;
-//         let msgSplit = regex.exec(msg);
-//
-//         if(msgSplit[1] != undefined && !tools.isURL(msgSplit[1])){
-//             msg.author.send("Format de l'url incorrect.");
-//             return false;
-//         }else if(msgSplit[1] != undefined && sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+msgSplit[1]+"';").get().cmp > 0){
-//             msg.author.send("Ce lien est déjà enregistré.");
-//             return false;
-//         }else{
-//             if(saveEdit(msg, id, msgSplit[1], msgSplit[2], msgSplit[3])) {
-//                 var bm = client.getBookmarkById.get(id);
-//                 const reply = new discord.RichEmbed();
-//                 reply.setColor('#0099FF');
-//                 editResult = '['+tools.shorten(bm.link, 50) + '](' + tools.shorten(bm.link, 50) + ")\n";
-//                 editResult += '**Tags : ** '+bm.tags + "\n";
-//                 if(bm.description != null){
-//                     editResult +=  "**Description : **" + bm.description + "\n\n";
-//                 }
-//                 reply.addField('Modification bien enregistrée. : ', editResult, true);
-//
-//                 msg.author.send(reply);
-//                 return true;
-//             }else{
-//                 msg.author.send("Erreur lors de l'enregistrement de votre édition.");
-//                 return false;
-//             }
-//         }
-//     }else{
-//         this.help(msg, "edit");
-//     }
-// }
-//
-// function saveEdit(msg, id, url=null, tag=null, desc=null){
-//     if (url != null) {
-//         let updateBookmarkUrl = client.updateBookmarkUrl.run(url, id);
-//     }
-//
-//     if (tag != null) {
-//         let deleteBookmarkTag = client.deleteBookmarkTag.run(id);
-//         saveBookmarkTag(id, tag.split(','));
-//     }
-//
-//     if (desc != null) {
-//         let updateBookmarkDesc = client.updateBookmarkDesc.run(desc, id);
-//     }
-//
-//     return true;
-// }
-
 
 function prepareSql(){
     const tableBookmark = sql.prepare("SELECT count(*) FROM sqlite_master WHERE type='table' AND name = 'bookmark';").get();
@@ -284,25 +202,27 @@ function help(action='*'){
     reply('success', 'private', 'Information', description);
 }
 
-function add(url, tags, desc){
-    if(url == null || tags == null){
+function add(args){
+    const addRegex = /^([^\s]+)?[\s]?([^\s]+)?[\s]?(.+)?/;
+    let addSplit = addRegex.exec(args);
+    if(addSplit[1] == null || addSplit[2] == null){
         reply('error', 'private', 'Commande incorrect', 'Tape \'!bm add help\' pour plus d\'information');
         return false;
     }
-    if(!tools.isURL(url)){
+    if(!tools.isURL(addSplit[1])){
         reply('error', 'private', 'Format de l\'url incorrect', 'Tape \'!bm add help\' pour plus d\'information');
         return false;
     }
-    if(sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+url+"';").get().cmp > 0){
+    if(sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+addSplit[1]+"';").get().cmp > 0){
         reply('warning', 'private', 'Impossible d\'enregistrer votre lien', 'Ce lien est déjà enregistré.');
         return false;
     }
 
     let bm = {
         id : '',
-        link : url,
-        tags : tags.split(','),
-        description : desc,
+        link : addSplit[1],
+        tags : addSplit[2].split(','),
+        description : addSplit[3],
         point : 0,
         user : msg.author.id
     };
@@ -433,4 +353,64 @@ function deleteBookmark(id){
         return false;
     }
     return true;
+}
+
+function edit(args){
+    console.log('--- EDIT ---');
+    console.log(args);
+    let editRegex = /^([0-9]+)?(?:\s+)?(?:url:([^\s]+))?(?:\s+)?(?:\s+)?(?:tag:([^\s]+))?(?:\s+)?(?:desc:(.+)$)?/;
+    let editSplit = editRegex.exec(args);
+
+    if(editSplit[1] == undefined){
+        let bookmarkUser = listBookmarkUser(msg.author.id);
+        if(bookmarkUser != ''){
+            reply('success', 'private', 'Selectionner le bookmark que vous souhaiter éditer.\nPuis taper !bm delete <id> : ', bookmarkUser);
+        }else{
+            reply('warning', 'private', 'Aucun bookmark à éditer', 'Vous n\'avez enregistré aucun bookmark pour le moment.');
+        }
+    }else if(editSplit[1] == parseInt(editSplit[1],10)){
+        if(editSplit[2] != undefined && !tools.isURL(editSplit[2])){
+            reply('error', 'private', 'Erreur d\'édition', 'Format de l\'url invalide');
+        }else if(editSplit[2] != undefined && sql.prepare("SELECT count(*) AS cmp FROM bookmark WHERE link='"+editSplit[2]+"';").get().cmp > 0){
+            reply('warning', 'private', 'Erreur d\'édition', 'Ce lien est déjà enregistré.');
+        }else{
+            if(saveEdit(editSplit[1], editSplit[2], editSplit[3], editSplit[4])) {
+                reply('success', 'private', 'Edition', 'Modification bien enregistrée');
+            }else{
+                reply('error', 'private', 'Erreur d\'édition', 'Erreur lors de l\'enregistrement de votre modification');
+            }
+        }
+    }else{
+        reply('error', 'private', 'Commande inconnue', 'Tape \'!bm edit help\' pour plus d\'information');
+    }
+}
+
+function saveEdit(id, url=null, tag=null, desc=null){
+    let error = false;
+    if (url != null) {
+        let updateBookmarkUrl = client.updateBookmarkUrl.run(url, id);
+        if(updateBookmarkUrl.changes < 1){
+            error = true;
+        }
+    }
+
+    if (tag != null) {
+        console.log("edit tag");
+        let deleteBookmarkTag = client.deleteBookmarkTag.run(id);
+        if(deleteBookmarkTag.changes < 1){
+            error = true;
+        }
+        if(!saveBookmarkTag(id, tag.split(','))){
+            error = true;
+        }
+    }
+
+    if (desc != null) {
+        let updateBookmarkDesc = client.updateBookmarkDesc.run(desc, id);
+        if(updateBookmarkDesc.changes < 1){
+            error = true;
+        }
+    }
+
+    return !error;
 }

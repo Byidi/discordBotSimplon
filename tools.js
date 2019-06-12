@@ -1,3 +1,5 @@
+/*jshint esversion: 9 */
+
 const Config = require('./config.json');
 
 module.exports = {
@@ -30,4 +32,4 @@ module.exports = {
             return false;
         }
     }
-}
+};
