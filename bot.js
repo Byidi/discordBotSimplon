@@ -36,7 +36,7 @@ client.on('message', msg => {
 
 			const regex_action = /^\!(.[^\s]+)/;
 			const action = (regex_action.exec(msg.content) === null)?"":regex_action.exec(msg.content)[1];
-			console.log(msg.content);
+
 			var plugin_action = false;
 			for(let name in plugins){
 				if(typeof plugins[name].command !== 'undefined' && typeof plugins[name].command === 'function'){

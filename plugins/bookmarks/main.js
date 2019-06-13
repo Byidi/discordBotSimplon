@@ -3,8 +3,8 @@
 const discord = require('discord.js');
 const tools = require('../../tools.js');
 const sqlite = require('better-sqlite3');
-
 const client = new discord.Client();
+
 const sql = new sqlite('./sql/bookmark.sqlite');
 
 var msg = null;
@@ -39,7 +39,6 @@ module.exports = {
                 break;
                 case 'edit':
                     edit(msgSplit[3]);
-                    console.log("edit");
                 break;
                 case 'tag':
                     tag();
@@ -315,8 +314,7 @@ function deleteBookmark(id){
 }
 
 function edit(args){
-    console.log('--- EDIT ---');
-    console.log(args);
+    
     let editRegex = /^([0-9]+)?(?:\s+)?(?:url:([^\s]+))?(?:\s+)?(?:\s+)?(?:tag:([^\s]+))?(?:\s+)?(?:desc:(.+)$)?/;
     let editSplit = editRegex.exec(args);
 

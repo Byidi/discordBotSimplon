@@ -4,6 +4,10 @@
             {
                 "name" : "Bookmarks",
                 "file" : "bookmarks/main.js"
+            },
+            {
+                "name" : "Calendar",
+                "file" : "calendar/main.js"
             }
         ]
 }
