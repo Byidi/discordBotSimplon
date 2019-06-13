@@ -6,6 +6,7 @@ const sqlite = require('better-sqlite3');
 const client = new discord.Client();
 
 const sql = new sqlite('./sql/calendar.sqlite');
+const config = require('./config.json');
 
 var msg = null;
 
@@ -63,6 +64,23 @@ function prepareSql(){
 function add(args){
     // TODO:
     console.log("calendar add");
+
+    // TODO: fixe missing desc in cmd
+    let addRegex = /^\!cal add ([0-9]{1,2})\/([0-9]{1,2})(?:\/([0-9]{4}))?(?:-([0-9]{1,2}):([0-9]{1,2}))?(?:\s([0-9]{1,2})\/([0-9]{1,2})(?:\/([0-9]{4}))?(?:-([0-9]{1,2}):([0-9]{1,2}))?)?\s(.+?(?=desc:))(?:desc:(.+))?/;
+
+    let addSplit = addRegex.exec(args);
+
+    addSplit[3] = (addSplit[3] == undefined)?new Date(Date.now()).getFullYear():addSplit[3];
+    addSplit[4] = (addSplit[4] == undefined)?config.start_hour:addSplit[4];
+    addSplit[5] = (addSplit[5] == undefined)?0:addSplit[5];
+
+    addSplit[6] = (addSplit[6] == undefined)?addSplit[1]:addSplit[7];
+    addSplit[7] = (addSplit[7] == undefined)?addSplit[2]:addSplit[7];
+    addSplit[8] = (addSplit[8] == undefined)?new Date(Date.now()).getFullYear():addSplit[8];
+    addSplit[9] = (addSplit[9] == undefined)?config.end_hour:addSplit[9];
+    addSplit[10] = (addSplit[10] == undefined)?0:addSplit[10];
+
+
 }
 
 function remove(args){
