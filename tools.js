@@ -34,7 +34,7 @@ module.exports = {
         }
     },
 
-    reply : function(msg, type, channel, title, desc, obj=null){
+    reply : function(msg, type, channel, title, description){
 
         const reply = new discord.RichEmbed();
 
@@ -54,18 +54,6 @@ module.exports = {
 
         reply.setTitle(title);
 
-        let description = '';
-        switch(desc){
-            case 'add':
-                description += '[' + tools.shorten(obj.link,50) + '](' + tools.shorten(obj.link,50) + ')\n';
-                description += '**Tags : **' + obj.tags + '\n';
-                if(obj.description != null) {
-                    description += '**Description : **' + obj.description + '\n';
-                }
-            break;
-            default:
-                description = desc;
-        }
         reply.setDescription(description);
 
         if (channel == 'private'){

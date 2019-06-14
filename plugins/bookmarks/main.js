@@ -186,7 +186,13 @@ function add(args){
     };
 
     if(save(bm)){
-        tools.reply(msg, 'success', 'public', 'Lien enregistré par '+msg.author.username, "add", bm);
+        description = '[' + tools.shorten(bm.link,50) + '](' + tools.shorten(bm.link,50) + ')\n';
+        description += '**Tags : **' + bm.tags + '\n';
+        if(bm.description != null) {
+            description += '**Description : **' + bm.description + '\n';
+        }
+
+        tools.reply(msg, 'success', 'public', 'Lien enregistré par '+msg.author.username, description);
         return true;
     }else{
 		tools.reply(msg, 'error', 'private', 'Erreur', 'Une erreur a eu lieu lors de l\'enregistrement de votre lien.');
@@ -314,7 +320,7 @@ function deleteBookmark(id){
 }
 
 function edit(args){
-    
+
     let editRegex = /^([0-9]+)?(?:\s+)?(?:url:([^\s]+))?(?:\s+)?(?:\s+)?(?:tag:([^\s]+))?(?:\s+)?(?:desc:(.+)$)?/;
     let editSplit = editRegex.exec(args);
 

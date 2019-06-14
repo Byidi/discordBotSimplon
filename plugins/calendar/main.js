@@ -59,28 +59,43 @@ function prepareSql(){
         sql.pragma("synchronous = 1");
         sql.pragma("journal_mode = wal");
     }
+    client.setEvent = sql.prepare('INSERT INTO event (start, end, title, description, creator) VALUES (@startDate, @endDate, @title, @description, @creator)');
 }
 
 function add(args){
-    // TODO:
-    console.log("calendar add");
-
-    // TODO: fixe missing desc in cmd
-    let addRegex = /^\!cal add ([0-9]{1,2})\/([0-9]{1,2})(?:\/([0-9]{4}))?(?:-([0-9]{1,2}):([0-9]{1,2}))?(?:\s([0-9]{1,2})\/([0-9]{1,2})(?:\/([0-9]{4}))?(?:-([0-9]{1,2}):([0-9]{1,2}))?)?\s(.+?(?=desc:))(?:desc:(.+))?/;
+    let addRegex = /^(?<startDay>[0-9]{1,2})\/(?<startMonth>[0-9]{1,2})(?:\/(?<startYear>[0-9]{4}))?(?:-(?<startHour>[0-9]{1,2}):(?<startMin>[0-9]{1,2}))?(?:\s(?<endDay>[0-9]{1,2})\/(?<endMonth>[0-9]{1,2})(?:\/(?<endYear>[0-9]{4}))?(?:-(?<endHour>[0-9]{1,2}):(?<endMin>[0-9]{1,2}))?)?\s(?<title>.+(?=desc:))?(?:desc:)?(?<description>.+)?$/;
 
     let addSplit = addRegex.exec(args);
+    if (addSplit != null){
+        addSplit = fixOptionnal(addSplit);
+        if(addSplit.groups.title == undefined){
+            tools.reply(msg, 'error', 'private', 'Commande erronée', 'Le titre de l\'évènement est obligatoire.\nTape \'!cal add help\' pour plus d\'information');
+            return false;
+        }
 
-    addSplit[3] = (addSplit[3] == undefined)?new Date(Date.now()).getFullYear():addSplit[3];
-    addSplit[4] = (addSplit[4] == undefined)?config.start_hour:addSplit[4];
-    addSplit[5] = (addSplit[5] == undefined)?0:addSplit[5];
+        let startDate = new Date(addSplit.groups.startYear, addSplit.groups.startMonth-1, addSplit.groups.startDay, addSplit.groups.startHour, addSplit.groups.startMin);
+        let endDate = new Date(addSplit.groups.endYear, addSplit.groups.endMonth-1, addSplit.groups.endDay, addSplit.groups.endHour, addSplit.groups.endMin);
 
-    addSplit[6] = (addSplit[6] == undefined)?addSplit[1]:addSplit[7];
-    addSplit[7] = (addSplit[7] == undefined)?addSplit[2]:addSplit[7];
-    addSplit[8] = (addSplit[8] == undefined)?new Date(Date.now()).getFullYear():addSplit[8];
-    addSplit[9] = (addSplit[9] == undefined)?config.end_hour:addSplit[9];
-    addSplit[10] = (addSplit[10] == undefined)?0:addSplit[10];
+        var newEvent = {
+            id: '',
+            startDate: startDate.getTime(),
+            endDate: endDate.getTime(),
+            title: addSplit.groups.title,
+            description: addSplit.groups.description,
+            creator: msg.author.id
+        };
 
+        if(saveEvent(newEvent)){
+            let description = descForReply(newEvent);
 
+            tools.reply(msg, 'success', 'public', 'Evènement ajouté par '+msg.author.username, description);
+        }else{
+            tools.reply(msg, 'error', 'private', 'Erreur', 'Une erreur a eu lieu lors de l\'enregistrement de votre évènement.');
+        }
+
+    }else{
+        tools.reply('error', 'private', 'Commande erronée', 'Tape \'!cal add help\' pour plus d\'information');
+    }
 }
 
 function remove(args){
@@ -101,4 +116,38 @@ function help(action='*'){
 function list(args){
     // TODO:
     console.log("calendar list");
+}
+
+function fixOptionnal(addSplit){
+    addSplit.groups.startYear = (addSplit.groups.startYear == undefined)?new Date(Date.now()).getFullYear():addSplit.groups.startYear;
+    addSplit.groups.startHour = (addSplit.groups.startHour == undefined)?config.startHour:addSplit.groups.startHour;
+    addSplit.groups.startMin = (addSplit.groups.startMin == undefined)?0:addSplit.groups.startMin;
+
+    addSplit.groups.endDay = (addSplit.groups.endDay == undefined)?addSplit.groups.startDay:addSplit.groups.endDay;
+    addSplit.groups.endMonth = (addSplit.groups.endMonth == undefined)?addSplit.groups.startMonth:addSplit.groups.endMonth;
+    addSplit.groups.endYear = (addSplit.groups.endYear == undefined)?addSplit.groups.startYear:addSplit.groups.endYear;
+    addSplit.groups.endHour = (addSplit.groups.endHour == undefined)?config.endHour:addSplit.groups.endHour;
+    addSplit.groups.endMin = (addSplit.groups.endMin == undefined)?0:addSplit.groups.endMin;
+
+    return addSplit;
+}
+
+function saveEvent(newEvent){
+    console.log("save event");
+    console.log(newEvent);
+    let insert = client.setEvent.run(newEvent);
+    if(insert.changes >= 1){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+function descForReply(ev){
+    let description = '**'+ev.title+'** : \n\n';
+    description += '**Du **: '+('0'+new Date(ev.startDate).getDate()).slice(-2)+'/'+('0'+(new Date(ev.startDate).getMonth()+1)).slice(-2)+'/'+new Date(ev.startDate).getFullYear()+' à '+('0'+new Date(ev.startDate).getHours()).slice(-2)+'H'+('0' + new Date(ev.startDate).getMinutes()).slice(-2)+'\n';
+    description += '**Au **: '+('0'+new Date(ev.endDate).getDate()).slice(-2)+'/'+('0'+(new Date(ev.endDate).getMonth()+1)).slice(-2)+'/'+new Date(ev.endDate).getFullYear()+' à '+('0'+new Date(ev.startDate).getHours()).slice(-2)+'H'+('0' + new Date(ev.startDate).getMinutes()).slice(-2)+'\n';
+    description += '**Info **: \n'+ev.description;
+
+    return description;
 }
